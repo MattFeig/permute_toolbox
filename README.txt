@@ -1,1 +1,0 @@
-Implementation of a permutation feature importance analysis (such as https://scikit-learn.org/stable/modules/permutation_importance.html) which allows you to permute predefined sets of features which the sklearn implementation does not allow. 
