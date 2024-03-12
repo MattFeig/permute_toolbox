@@ -1,0 +1,1 @@
+Implementation of a permutation feature importance analysis (e.g. https://scikit-learn.org/stable/modules/permutation_importance.html) with functions designed specifically for working with functional connectivity data. The main purpose is to be able to permute a-priori sets of features at a single time, which the sklearn implementation does not allow. 
