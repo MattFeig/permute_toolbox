@@ -109,13 +109,12 @@ def loocv_svm_permute_features(X, y, features_to_permute, num_permutations = 5, 
     - kernel: string, kernel type of the SVM.
 
     Returns:
-    - results: dict, organized results of predictions and weights for each permuted feature set.
+    - results: dict, organized results of predictions for each permuted feature set.
     """
 
     results = {i: [] for i in range(len(features_to_permute))}
     
     for iteration in range(len(X)):
-        print(iteration)
         X_train, y_train, X_test, y_test = split_data_loo(X, y, iteration)
         model = train_svm(X_train, y_train, C=C, kernel=kernel)
         ### PERMUTE FEATURES DURING TESTING
@@ -127,4 +126,5 @@ def loocv_svm_permute_features(X, y, features_to_permute, num_permutations = 5, 
                 accuracies.append(accuracy)
             mean_accuracy = np.mean(accuracies)
             results[set_number].append(mean_accuracy)
+        if iteration%50==0: print(iteration)
     return results

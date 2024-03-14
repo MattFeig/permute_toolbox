@@ -1,7 +1,8 @@
 import numpy as np
 import subprocess, os
-path_to_wb = '/Applications/workbench/bin_macosx64/wb_command'
 import matplotlib.pyplot as plt
+
+path_to_wb = '/Applications/workbench/bin_macosx64/wb_command'
 
 def load_nii(nii_path, purge=True):
     '''
@@ -49,6 +50,7 @@ def create_corrmat(ts):
     z_trans_mat = np.arctanh(corrmat)
     np.fill_diagonal(z_trans_mat,1)
     return z_trans_mat
+
 # Assumes parcels are ordered by reorder indicies
 def make_corrfig(z_trans_mat, weights = False):
     import matplotlib.cm as cm

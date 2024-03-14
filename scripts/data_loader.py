@@ -5,7 +5,10 @@ from sklearn.preprocessing import StandardScaler
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from permute_toolbox.rsfc_tools import flatten_upper_triangle_3D
+
+from permute_toolbox.parcel_tools import reorder_indices
+from permute_toolbox.rsfc_tools import flatten_upper_triangle_3D, create_corrmat
+
 
 def data_loader(sub_demo_list):
    
@@ -88,3 +91,56 @@ def prep_data():
     X_scale = scaler.fit_transform(X)
 
     return X_scale, y
+
+
+def reformat_vc(name):
+    if '_2' in name and len(name[(name.find('_2')+2):]) == 0:
+        name = name.replace('_2', 'V2')
+    if '_' in name:
+        name = name.replace('_', '')  
+    name = name.upper()
+    return name
+
+def load_timeseries_data():
+    
+    participants = pd.read_excel('../data/demo_clin_data/participants.xlsx')
+    ts202_data_dir = '../data/ts202_timeseries'
+
+    participants_TS = participants[(participants['Class']=='TS') & (participants['Age']<=13.1)]
+    participants_TFC = participants[(participants['Class']=='TFC') & (participants['Age']<=13)]
+
+    # participants_TS = participants[(participants['Class']=='TS') ]
+    # participants_TFC = participants[(participants['Class']=='TFC') ]
+    # participants_TS = participants[(participants['Class']=='TS') & (participants['Age']>=18)]
+    # participants_TFC = participants[(participants['Class']=='TFC') & (participants['Age']>=18)]
+
+    participants_TS.VC = participants_TS.VC.apply(reformat_vc)
+    participants_TFC.VC = participants_TFC.VC.apply(reformat_vc)
+
+    TS_timeseries_list = []
+    for sub in participants_TS.VC:
+        filename = f'sub-{sub}_Gordon_Subcort_0.2FDcens_CONCAT_UNORDERED_TIMESERIES.txt'
+        filepath = os.path.join(ts202_data_dir,filename)
+        TS_timeseries_list.append(np.genfromtxt(filepath))
+        
+    TFC_timeseries_list = []
+    for sub in participants_TFC.VC:
+        filename = f'sub-{sub}_Gordon_Subcort_0.2FDcens_CONCAT_UNORDERED_TIMESERIES.txt'
+        filepath = os.path.join(ts202_data_dir,filename)
+        TFC_timeseries_list.append(np.genfromtxt(filepath))
+
+    ts_con_stack_unordered = np.stack([create_corrmat(x) for x in TS_timeseries_list],2)
+    tfc_con_stack_unordered = np.stack([create_corrmat(x) for x in TFC_timeseries_list],2)
+
+    ts_con_stack_ordered = np.copy(ts_con_stack_unordered)[reorder_indices,:,:][:,reorder_indices,:]
+    tfc_con_stack_ordered = np.copy(tfc_con_stack_unordered)[reorder_indices,:,:][:,reorder_indices,:]
+
+    TS_con_flat = flatten_upper_triangle_3D(ts_con_stack_ordered)
+    TFC_con_flat = flatten_upper_triangle_3D(tfc_con_stack_ordered)
+
+    X = np.vstack((TS_con_flat,TFC_con_flat))
+
+    # create label vector: 1 for TS, -1 for TFC
+    y = np.concatenate((np.repeat(1,np.shape(TS_con_flat)[0]), np.repeat(-1,np.shape(TFC_con_flat)[0])))
+
+    return X, y
